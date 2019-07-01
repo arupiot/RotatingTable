@@ -7,12 +7,14 @@ import gohai.glvideo.PerspectiveTransform;
 import gohai.glvideo.WarpPerspective;
 import java.awt.geom.Point2D;
 
+int NUMBER = 2;
+float SCALING = 2.5;
 int lf = 10;      // ASCII linefeed
-PImage[] sources = new PImage[2];
+//PImage[] sources = new PImage[NUMBER];
 int selSource = 0;
 GLMovie[] videos = new GLMovie[2];
-GLMovie[] making_of_videos = new GLMovie[2];
-String[] text_content = new String[2];
+GLMovie[] making_of_videos = new GLMovie[NUMBER];
+String[] text_content = new String[NUMBER];
 Serial myPort;  // Create object from Serial class
 String val;     // Data received from the serial port
 PFont f;
@@ -34,16 +36,18 @@ void setup() {
   videos[0].loop();
   making_of_videos[0] = new GLMovie(this, "(un)balance - The making of.mp4");
   making_of_videos[0].loop();
+
   videos[1] = new GLMovie(this, "BirdSpace.mp4");
   videos[1].loop();
   videos[1].pause();
+  
   making_of_videos[1] = new GLMovie(this, "BirdSpace - The Making of.mp4");
   making_of_videos[1].loop();
   making_of_videos[1].pause();
 
   // Create the font
   //printArray(PFont.list());
-  f = createFont("Helvetica-Light", 8);
+  f = createFont("Helvetica-Light", 18);
   textFont(f);
   fill(255);
 
@@ -61,6 +65,8 @@ void draw() {
     making_of_videos[selSource].read();
   }
 
+
+  // converting serial value
   //angle = millis()%speed/float(speed)*PI*2;
   try {
     if (val!=null) angle = (Integer.parseInt(val.replace("\r\n", "")))%speed/float(speed)*PI*2;
@@ -88,13 +94,13 @@ void draw() {
   if (millis()%50==0) println("Angle: "+angle);
 
   // show text, the text wraps within text box
-  text(text_content[selSource], 0+width/50, height/6/10, width/6-width/50, height/6*2); 
+  text(text_content[selSource], 0+width/50, height/SCALING/2/20, width/SCALING/2-width/50, height/SCALING/2*2); 
 
   // show main video
-  image(videos[selSource], -width/3/2, -height/3*1.1, width/3, height/3);
+  image(videos[selSource], -width/SCALING/2, -height/SCALING*1.1, width/SCALING, height/SCALING);
 
   // show making of video
-  image(making_of_videos[selSource], -width/3/2, height/6/10, width/6, height/6);
+  image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/20, width/SCALING/2, height/SCALING/2);
 
   popMatrix();
 }
@@ -117,9 +123,9 @@ void changeVideo() {
   println("Source: "+selSource);
 }
 
-void mousePressed() {
-  changeVideo();
-}
+//void mousePressed() {
+//  changeVideo();
+//}
 
 void serialEvent(Serial myPort) {
   val = myPort.readStringUntil('\n'); // read it and store it in val
