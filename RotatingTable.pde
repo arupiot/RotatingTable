@@ -7,8 +7,9 @@ import gohai.glvideo.PerspectiveTransform;
 import gohai.glvideo.WarpPerspective;
 import java.awt.geom.Point2D;
 
+boolean USE_SERIAL = false;
 int NUMBER = 2;
-float SCALING = 2.5;
+float SCALING = 2;
 int lf = 10;      // ASCII linefeed
 //PImage[] sources = new PImage[NUMBER];
 int selSource = 0;
@@ -24,8 +25,9 @@ int speed = 1000;
 float angle = 0;
 
 void setup() {
-  fullScreen(P2D);
-  //fullScreen(P3D);
+  //fullScreen();
+  //fullScreen(P2D);
+  fullScreen(P3D);
   //fullScreen(FX2D);
   noCursor();
 
@@ -51,10 +53,12 @@ void setup() {
   textFont(f);
   fill(255);
 
-  printArray(Serial.list());
-  String portName = Serial.list()[1]; //change the 0 to a 1 or 2 etc. to match your port
-  myPort = new Serial(this, portName, 9600);
-  val = myPort.readStringUntil(lf);
+  if (USE_SERIAL) {
+    printArray(Serial.list());
+    String portName = Serial.list()[1]; //change the 0 to a 1 or 2 etc. to match your port
+    myPort = new Serial(this, portName, 9600);
+    val = myPort.readStringUntil(lf);
+  }
 }
 
 void draw() {
@@ -65,25 +69,28 @@ void draw() {
     making_of_videos[selSource].read();
   }
 
-
   // converting serial value
-  //angle = millis()%speed/float(speed)*PI*2;
-  try {
-    if (val!=null) angle = (Integer.parseInt(val.replace("\r\n", "")))%speed/float(speed)*PI*2;
-    int newSource = int((Integer.parseInt(val.replace("\r\n", "")))%speed/float(speed)*videos.length);
+  if (USE_SERIAL) {
+    try {
+      if (val!=null) angle = (Integer.parseInt(val.replace("\r\n", "")))%speed/float(speed)*PI*2;
+      int newSource = int((Integer.parseInt(val.replace("\r\n", "")))%speed/float(speed)*videos.length);
+      if (newSource!=selSource) updateVideo(newSource, selSource);
+      println("Serial value: "+val+"|"); //print it out in the console
+    }
+    catch (NumberFormatException e) {
+      println("Serial communication value with problem:" +val+"|");
+    }
+    catch (NullPointerException e) {
+      println("Null pointer exception");
+    }
+  } else {
+    angle = millis()%(speed*10)/float(speed*10)*PI*2;
+    int newSource = int(angle/PI/2*10000%(speed*10)/float(speed*10)*videos.length);
     if (newSource!=selSource) updateVideo(newSource, selSource);
-    println("Serial value: "+val+"|"); //print it out in the console
-  }
-
-  catch (NumberFormatException e) {
-    println("Serial communication value with problem:" +val+"|");
-  }
-  catch (NullPointerException e) {
-    println("Null pointer exception");
   }
 
   //println("Angle: "+angle+"|"); //print it out in the console
-  pushMatrix();
+  //pushMatrix();
 
   int x = width/2;
   int y = height/2;
@@ -93,16 +100,16 @@ void draw() {
 
   if (millis()%50==0) println("Angle: "+angle);
 
-  // show text, the text wraps within text box
-  text(text_content[selSource], 0+width/50, height/SCALING/2/20, width/SCALING/2-width/50, height/SCALING/2*2); 
-
   // show main video
-  image(videos[selSource], -width/SCALING/2, -height/SCALING*1.1, width/SCALING, height/SCALING);
+  image(videos[selSource], -width/SCALING/2, -height/SCALING*1.05, width/SCALING, height/SCALING);
 
   // show making of video
-  image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/20, width/SCALING/2, height/SCALING/2);
+  image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/30, width/SCALING/2, height/SCALING/2);
+  
+  // show text, the text wraps within text box
+  text(text_content[selSource], 0+width/50, height/SCALING/2/30, width/SCALING/2-width/50, height/SCALING/2*2); 
 
-  popMatrix();
+  //popMatrix();
 }
 
 void updateVideo(int newSource, int curSource) {
@@ -114,14 +121,14 @@ void updateVideo(int newSource, int curSource) {
   println("Source: "+selSource);
 }
 
-void changeVideo() {
-  videos[selSource].pause();
-  making_of_videos[selSource].pause();
-  selSource = (selSource+1) % videos.length;
-  videos[selSource].loop();
-  making_of_videos[selSource].loop();
-  println("Source: "+selSource);
-}
+//void changeVideo() {
+//  videos[selSource].pause();
+//  making_of_videos[selSource].pause();
+//  selSource = (selSource+1) % videos.length;
+//  videos[selSource].loop();
+//  making_of_videos[selSource].loop();
+//  println("Source: "+selSource);
+//}
 
 //void mousePressed() {
 //  changeVideo();
