@@ -9,13 +9,20 @@ import java.awt.geom.Point2D;
 import processing.video.*;
 
 boolean USE_SERIAL = false;
-int NUMBER = 8;
-float SCALING = 2.8;
+int NUMBER = 10;
+float SCALING = 2.5;
 int FONT_SIZE = 10;
 int FONT_SIZE_BIG = 14;
+int IDLE_TIME = 10*1000;
+
+enum Status {
+  RUNNING,
+  IDLE
+}
 
 int steps = 1000;
 float speed = 0.2;
+Status status = Status.IDLE;
 
 int lf = 10;      // ASCII linefeed
 int selSource = 0;
@@ -35,6 +42,10 @@ String val;     // Data received from the serial port
 PFont f, fb;
 
 float angle = 0;
+float angleDeg = 0;
+float angleDegEnd = 0;
+float percentMovement = 0;
+int fading = 255;
 
 void setup() {
   //fullScreen();
@@ -77,42 +88,29 @@ void setup() {
   making_of_videos[2].loop();
   making_of_videos[2].pause();
   
-  //text_author[3] = "Ahrian Taylor & Eugenio Moggio";
-  //text_title[3] = "Nero";
-  //text_url[3] = "http://www.interactivearchitecture.org/lab-projects/nero";
-  //text_content[3] = "Nero (νερό, Greek for water) is an immersive Virtual Reality experience centred around embodied learning environments. Here, you are Nero, a virtual character that explores an Atlantis-themed environment whilst on a journey to learn about the process of evaporation. Through completing a series of small tasks, Nero builds up an understanding of the separate elements involved in evaporation. The narrative arch of the game culminates in Nero being rewarded upon completing the final task with cohesive knowledge of the overall process.";
+  text_author[3] = "Ahrian Taylor & Eugenio Moggio";
+  text_title[3] = "Nero";
+  text_url[3] = "http://www.interactivearchitecture.org/lab-projects/nero";
+  text_content[3] = "Nero (νερό, Greek for water) is an immersive Virtual Reality experience centred around embodied learning environments. Here, you are Nero, a virtual character that explores an Atlantis-themed environment whilst on a journey to learn about the process of evaporation. Through completing a series of small tasks, Nero builds up an understanding of the separate elements involved in evaporation. The narrative arch of the game culminates in Nero being rewarded upon completing the final task with cohesive knowledge of the overall process.";
   
-  //videos[3] = new Movie(this, "Nero.mp4");
-  //videos[3].loop();
-  //videos[3].pause();
-  //making_of_videos[3] = new Movie(this, "Nero - The making of.mp4");
-  //making_of_videos[3].loop();
-  //making_of_videos[3].pause();
-  
-  text_author[3] = "Parker Heyl";
-  text_title[3] = "Analog Future";
-  text_url[3] = "http://www.interactivearchitecture.org/lab-projects/analog-future";
-  text_content[3] = "This project questions the use of emerging technologies in contemporary music, art, and architectural practices and our notions of spatiality in translating from the physical to the virtual. A holistic cybernetic fantasy blurs the line between the virtual and the real. The physical object is slowly tranquilized and replaced with less potent simulacra of itself. Interactive algorithms have largely informed modern conceptions of intelligence, thus ignoring the ways in which naturally-occurring physical systems also form networks encoded with complex information. Against this trend, Analog Future seeks to relinquish computerised regulation in favour of an analog aesthetic.";
-  
-  videos[3] = new Movie(this, "Analog Future.mp4");
+  videos[3] = new Movie(this, "Nero.mp4");
   videos[3].loop();
   videos[3].pause();
-  making_of_videos[3] = new Movie(this, "Analog Future - The making of.mp4");
+  making_of_videos[3] = new Movie(this, "Nero - The making of.mp4");
   making_of_videos[3].loop();
   making_of_videos[3].pause();
   
+  text_author[4] = "Parker Heyl";
+  text_title[4] = "Analog Future";
+  text_url[4] = "http://www.interactivearchitecture.org/lab-projects/analog-future";
+  text_content[4] = "This project questions the use of emerging technologies in contemporary music, art, and architectural practices and our notions of spatiality in translating from the physical to the virtual. A holistic cybernetic fantasy blurs the line between the virtual and the real. The physical object is slowly tranquilized and replaced with less potent simulacra of itself. Interactive algorithms have largely informed modern conceptions of intelligence, thus ignoring the ways in which naturally-occurring physical systems also form networks encoded with complex information. Against this trend, Analog Future seeks to relinquish computerised regulation in favour of an analog aesthetic.";
   
-  //text_author[4] = "Parker Heyl";
-  //text_title[4] = "Analog Future";
-  //text_url[4] = "http://www.interactivearchitecture.org/lab-projects/analog-future";
-  //text_content[4] = "This project questions the use of emerging technologies in contemporary music, art, and architectural practices and our notions of spatiality in translating from the physical to the virtual. A holistic cybernetic fantasy blurs the line between the virtual and the real. The physical object is slowly tranquilized and replaced with less potent simulacra of itself. Interactive algorithms have largely informed modern conceptions of intelligence, thus ignoring the ways in which naturally-occurring physical systems also form networks encoded with complex information. Against this trend, Analog Future seeks to relinquish computerised regulation in favour of an analog aesthetic.";
-  
-  //videos[4] = new Movie(this, "Analog Future.mp4");
-  //videos[4].loop();
-  //videos[4].pause();
-  //making_of_videos[4] = new Movie(this, "Analog Future - The making of.mp4");
-  //making_of_videos[4].loop();
-  //making_of_videos[4].pause();
+  videos[4] = new Movie(this, "Analog Future.mp4");
+  videos[4].loop();
+  videos[4].pause();
+  making_of_videos[4] = new Movie(this, "Analog Future - The making of.mp4");
+  making_of_videos[4].loop();
+  making_of_videos[4].pause();
   
   text_author[5] = "Michael Wagner";
   text_title[5] = "Marble Maze";
@@ -150,50 +148,18 @@ void setup() {
   making_of_videos[7].loop();
   making_of_videos[7].pause();
   
-  //text_author[8] = "Vasilija Abramovic, Bas Overvelde & Ruairi Glynn";
-  //text_title[8] = "Edge of Chaos";
-  //text_url[8] = "http://www.interactivearchitecture.org/lab-projects/edge-of-chaos";
-  //text_content[8] = "Scientists are recognising that the transition space between order and disorder known as Edge of Chaos displays complex behaviours within it. The continuous flux between organisation and instability may be what drives the engine of life and produces the boundless novelty of the natural world. This interactive installation invites visitors to experience the balancing point between highly ordered and turbulent systems. At its centre is a robotic tree representing Life, surrounded by an inert Cloud representing the vast unorganised matter of an entropic universe, and an interactive surface that represents the Edge of Chaos.";
+  text_author[8] = "Vasilija Abramovic, Bas Overvelde & Ruairi Glynn";
+  text_title[8] = "Edge of Chaos";
+  text_url[8] = "http://www.interactivearchitecture.org/lab-projects/edge-of-chaos";
+  text_content[8] = "Scientists are recognising that the transition space between order and disorder known as Edge of Chaos displays complex behaviours within it. The continuous flux between organisation and instability may be what drives the engine of life and produces the boundless novelty of the natural world. This interactive installation invites visitors to experience the balancing point between highly ordered and turbulent systems. At its centre is a robotic tree representing Life, surrounded by an inert Cloud representing the vast unorganised matter of an entropic universe, and an interactive surface that represents the Edge of Chaos.";
   
-  //videos[8] = new Movie(this, "Edge of Chaos.mp4");
-  //videos[8].loop();
-  //videos[8].pause();
-  //making_of_videos[8] = new Movie(this, "Making of Edge of Chaos.mp4");
-  //making_of_videos[8].loop();
-  //making_of_videos[8].pause();
+  videos[8] = new Movie(this, "Edge of Chaos.mp4");
+  videos[8].loop();
+  videos[8].pause();
+  making_of_videos[8] = new Movie(this, "Making of Edge of Chaos.mp4");
+  making_of_videos[8].loop();
+  making_of_videos[8].pause();
   
-  text_author[4] = "Vasilija Abramovic, Bas Overvelde & Ruairi Glynn";
-  text_title[4] = "Edge of Chaos";
-  text_url[4] = "http://www.interactivearchitecture.org/lab-projects/edge-of-chaos";
-  text_content[4] = "Scientists are recognising that the transition space between order and disorder known as Edge of Chaos displays complex behaviours within it. The continuous flux between organisation and instability may be what drives the engine of life and produces the boundless novelty of the natural world. This interactive installation invites visitors to experience the balancing point between highly ordered and turbulent systems. At its centre is a robotic tree representing Life, surrounded by an inert Cloud representing the vast unorganised matter of an entropic universe, and an interactive surface that represents the Edge of Chaos.";
-  
-  videos[4] = new Movie(this, "Edge of Chaos.mp4");
-  videos[4].loop();
-  videos[4].pause();
-  making_of_videos[4] = new Movie(this, "Making of Edge of Chaos.mp4");
-  making_of_videos[4].loop();
-  making_of_videos[4].pause();
-  
-
-//  videos[0] = new Movie(this, "(un)balance.mp4");
-//  videos[0].loop();
-//  making_of_videos[0] = new Movie(this, "(un)balance - The making of.mp4");
-//  making_of_videos[0].loop();
-
-//  videos[1] = new Movie(this, "BirdSpace.mp4");
-//  videos[1].loop();
-//  videos[1].pause();
-  
-//  making_of_videos[1] = new Movie(this, "BirdSpace - The Making of.mp4");
-//  making_of_videos[1].loop();
-//  making_of_videos[1].pause();
-
-
-
-  //making_of_videos[1] = new Movie(this, "BirdSpace - The Making of.mp4");
-  //making_of_videos[1].loop();
-  //making_of_videos[1].pause();
-
   // Create the font
   //printArray(PFont.list());
   f = createFont("Helvetica-Light", FONT_SIZE);
@@ -232,10 +198,18 @@ void draw() {
       println("Null pointer exception");
     }
   } else {
-    angle = (millis()*speed)%(steps*10)/float(steps*10)*PI*2;
+    //angle = (millis()*speed)%(steps*10)/float(steps*10)*PI*2;
+    angle = (mouseX)%(width)/float(width)*PI*2;
     int newSource = int(angle/PI/2*10000%(steps*10)/float(steps*10)*videos.length);
+    angleDeg = angle/PI*180;
+    angleDegEnd = 360.0/videos.length*(selSource+1);
+    float angleDegStart = 360.0/videos.length*(selSource);
+    percentMovement = (angleDeg-angleDegStart)/(360.0/videos.length)*100;
+    if (percentMovement <= 20) fading = int(percentMovement/20*255);
+    if (percentMovement >= 80) fading = int((100-percentMovement)/20*255);
     if (newSource!=selSource) updateVideo(newSource, selSource);
     //println("New Source: " + newSource + " | Sel Source: " + selSource);
+    //println("Percent movement: "+percentMovement); 
   }
 
   //println("Angle: "+angle+"|"); //print it out in the console
@@ -247,24 +221,26 @@ void draw() {
 
   rotate(angle);
 
-  if (millis()%10==0) println("Angle: "+angle);
+  if (millis()%10==0) println("Angle: "+angle+" | Percent movement: "+percentMovement+" | Angle degrees: "+angleDeg+" | Angle end: "+angleDegEnd);
 
+  tint(255, fading);
   // show main video
-  image(videos[selSource], -width/SCALING/2, -height/SCALING*1.05, width/SCALING, height/SCALING);
+  image(videos[selSource], -width/SCALING/2, -height/SCALING*0.8, width/SCALING, height/SCALING);
 
   // show making of video
-  image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/30, width/SCALING/2, height/SCALING/2);
+  image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/2, width/SCALING/2, height/SCALING/2);
  
+  tint(255, 255);
   // show author and title
   textFont(fb);
-  text(text_author[selSource]+" - "+text_title[selSource], 0+width/50, height/SCALING/2/30);
+  text(text_author[selSource]+" - "+text_title[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG);
   
   // shor url
   textFont(f);
-  text(text_url[selSource], 0+width/50, height/SCALING/2/30+FONT_SIZE);
+  text(text_url[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG*2);
   
   // show text, the text wraps within text box
-  text(text_content[selSource], 0+width/50, height/SCALING/2/30+FONT_SIZE*2, width/SCALING/2-width/50, height/SCALING/2*2); 
+  text(text_content[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG*3, width/SCALING/2-width/50, height/SCALING/2*2); 
 
   //popMatrix();
 }

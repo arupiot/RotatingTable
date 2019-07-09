@@ -1,3 +1,4 @@
 data/*.mp4
 data/*.mov
+data/*.mpeg
 .DS_Store
