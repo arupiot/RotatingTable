@@ -8,25 +8,26 @@ import gohai.glvideo.WarpPerspective;
 import java.awt.geom.Point2D;
 import processing.video.*;
 
-boolean USE_SERIAL = false;
+boolean USE_SERIAL = true;
 int NUMBER = 9;
 float SCALING = 2.5;
-int FONT_SIZE = 10;
-int FONT_SIZE_BIG = 14;
-int IDLE_TIME = 10*1000;
+int FONT_SIZE = 20;
+int FONT_SIZE_BIG = 30;
+int IDLE_TIME = 180*1000;
 
 enum Status {
   RUNNING, 
     IDLE
 }
 
-int steps = 1000;
+int steps = 4800;
 float speed = 0.2;
 Status status = Status.IDLE;
 int prevTime = 0;
 
 int lf = 10;      // ASCII linefeed
 int selSource = 0;
+int newSource = 0;
 
 //GLMovie[] videos = new Movie[NUMBER];
 //GLMovie[] making_of_videos = new Movie[NUMBER];
@@ -56,7 +57,9 @@ void setup() {
   //fullScreen(FX2D);
   noCursor();
 
-  screensaver = new Movie(this, "Home_page_1.mpeg");
+  screensaver = new Movie(this, "Home_page_1.mp4");
+  // screensaver = new Movie(this, "(Un)Balance.mp4");
+
   screensaver.loop();
   screensaver.pause();
 
@@ -69,6 +72,7 @@ void setup() {
   videos[0].loop();
   making_of_videos[0] = new Movie(this, "(un)balance - The making of.mp4");
   making_of_videos[0].loop();
+  making_of_videos[0].volume(0);
 
   text_author[1] = "Huisim Chan";
   text_title[1] = "Neoteny";
@@ -81,6 +85,7 @@ void setup() {
   making_of_videos[1] = new Movie(this, "Neoteny - The making of.mp4");
   making_of_videos[1].loop();
   making_of_videos[1].pause();
+  making_of_videos[1].volume(0);
 
   text_author[2] = "Christine Würth";
   text_title[2] = "NeoTouch";
@@ -93,6 +98,7 @@ void setup() {
   making_of_videos[2] = new Movie(this, "NeoTouch - The Making of.mp4");
   making_of_videos[2].loop();
   making_of_videos[2].pause();
+  making_of_videos[2].volume(0);
 
   text_author[3] = "Ahrian Taylor & Eugenio Moggio";
   text_title[3] = "Nero";
@@ -105,6 +111,7 @@ void setup() {
   making_of_videos[3] = new Movie(this, "Nero - The making of.mp4");
   making_of_videos[3].loop();
   making_of_videos[3].pause();
+  making_of_videos[3].volume(0);
 
   text_author[4] = "Parker Heyl";
   text_title[4] = "Analog Future";
@@ -117,6 +124,7 @@ void setup() {
   making_of_videos[4] = new Movie(this, "Analog Future - The making of.mp4");
   making_of_videos[4].loop();
   making_of_videos[4].pause();
+  making_of_videos[4].volume(0);
 
   text_author[5] = "Michael Wagner";
   text_title[5] = "Marble Maze";
@@ -129,6 +137,7 @@ void setup() {
   making_of_videos[5] = new Movie(this, "Marble Maze - The making of.mp4");
   making_of_videos[5].loop();
   making_of_videos[5].pause();
+  making_of_videos[5].volume(0);
 
   text_author[6] = "Luyang Zou & Yildiz Tufan";
   text_title[6] = "Phonon";
@@ -141,6 +150,7 @@ void setup() {
   making_of_videos[6] = new Movie(this, "Phonon - The making of.mp4");
   making_of_videos[6].loop();
   making_of_videos[6].pause();
+  making_of_videos[6].volume(0);
 
   text_author[7] = "Naomi Lea";
   text_title[7] = "Felt Presence";
@@ -153,6 +163,7 @@ void setup() {
   making_of_videos[7] = new Movie(this, "Yours Shadow - The making of.mp4");
   making_of_videos[7].loop();
   making_of_videos[7].pause();
+  making_of_videos[7].volume(0);
 
   text_author[8] = "Vasilija Abramovic, Bas Overvelde & Ruairi Glynn";
   text_title[8] = "Edge of Chaos";
@@ -165,6 +176,7 @@ void setup() {
   making_of_videos[8] = new Movie(this, "Making of Edge of Chaos.mp4");
   making_of_videos[8].loop();
   making_of_videos[8].pause();
+  making_of_videos[8].volume(0);
 
   // Create the font
   //printArray(PFont.list());
@@ -180,6 +192,8 @@ void setup() {
     val = myPort.readStringUntil(lf);
   }
   prevTime = millis();
+  
+  status = Status.IDLE;
 }
 
 void draw() {
@@ -198,7 +212,7 @@ void draw() {
   if (USE_SERIAL) {
     try {
       if (val!=null) angle = (Integer.parseInt(val.replace("\r\n", "")))%steps/float(steps)*PI*2;
-      int newSource = int((Integer.parseInt(val.replace("\r\n", "")))%steps/float(steps)*videos.length);
+      newSource = int((Integer.parseInt(val.replace("\r\n", "")))%steps/float(steps)*videos.length);
       if (newSource!=selSource) updateVideo(newSource, selSource);
       println("Serial value: "+val+"|"); //print it out in the console
     }
@@ -211,8 +225,12 @@ void draw() {
   } else {
     //angle = (millis()*speed)%(steps*10)/float(steps*10)*PI*2;
     angle = (mouseX)%(width)/float(width)*PI*2;
-    int newSource = int(angle/PI/2*10000%(steps*10)/float(steps*10)*videos.length);
-    angleDeg = angle/PI*180;
+    newSource = int(angle/PI/2*10000%(steps*10)/float(steps*10)*videos.length);
+    
+    //println("Percent movement: "+percentMovement);
+  }
+
+   angleDeg = angle/PI*180;
     if (selSource < videos.length) angleDegEnd = 360.0/videos.length*(selSource+1);
     else angleDegEnd = 360.0;
     float angleDegStart = (360.0/videos.length)*(selSource);
@@ -221,9 +239,7 @@ void draw() {
     if (percentMovement <= 20) fading = int(percentMovement/20*255);
     if (percentMovement >= 80) fading = int((100-percentMovement)/20*255);
     if (newSource!=selSource) updateVideo(newSource, selSource);
-    
-    //println("Percent movement: "+percentMovement);
-  }
+ 
 
   //println("Angle: "+angle+"|"); //print it out in the console
   //pushMatrix();
@@ -239,6 +255,10 @@ void draw() {
     tint(255, 255);
     image(screensaver, 0, 0, width, height);
     screensaver.loop();
+    for (int i=0;i<videos.length;i++) {
+      making_of_videos[i].volume(0);
+      videos[i].volume(0);
+    }
   } else {
     screensaver.pause();
     int x = width/2;
@@ -254,9 +274,9 @@ void draw() {
     // show making of video
     image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/2, width/SCALING/2, height/SCALING/2);
 
-    tint(255, 255);
     // show author and title
     textFont(fb);
+    fill(255,255,255,fading);
     text(text_author[selSource]+" - "+text_title[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG);
 
     // shor url
@@ -265,6 +285,8 @@ void draw() {
 
     // show text, the text wraps within text box
     text(text_content[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG*3, width/SCALING/2-width/50, height/SCALING/2*2); 
+    tint(255, 255);
+    fill(255,255,255,255);
 
     //popMatrix();
   }
@@ -275,6 +297,7 @@ void updateVideo(int newSource, int curSource) {
   making_of_videos[curSource].pause();
   selSource = newSource;
   videos[selSource].loop();
+  videos[selSource].volume(100);
   making_of_videos[selSource].loop();
   println("Source: "+selSource);
   prevTime = millis();
