@@ -13,7 +13,8 @@ int NUMBER = 9;
 float SCALING = 2.5;
 int FONT_SIZE = 20;
 int FONT_SIZE_BIG = 30;
-int IDLE_TIME = 180*1000;
+int IDLE_TIME = 120*1000;
+float VOLUME_LEVEL = 0.5;
 
 enum Status {
   RUNNING, 
@@ -24,6 +25,7 @@ int steps = 4800;
 float speed = 0.2;
 Status status = Status.IDLE;
 int prevTime = 0;
+float prevAngle= 0;
 
 int lf = 10;      // ASCII linefeed
 int selSource = 0;
@@ -57,7 +59,7 @@ void setup() {
   //fullScreen(FX2D);
   noCursor();
 
-  screensaver = new Movie(this, "Home_page_1.mp4");
+  screensaver = new Movie(this, "Home_page_2.mp4");
   // screensaver = new Movie(this, "(Un)Balance.mp4");
 
   screensaver.loop();
@@ -70,6 +72,7 @@ void setup() {
 
   videos[0] = new Movie(this, "(un)balance.mp4");
   videos[0].loop();
+  videos[0].volume(VOLUME_LEVEL);
   making_of_videos[0] = new Movie(this, "(un)balance - The making of.mp4");
   making_of_videos[0].loop();
   making_of_videos[0].volume(0);
@@ -84,8 +87,8 @@ void setup() {
   videos[1].pause();
   making_of_videos[1] = new Movie(this, "Neoteny - The making of.mp4");
   making_of_videos[1].loop();
-  making_of_videos[1].pause();
   making_of_videos[1].volume(0);
+  making_of_videos[1].pause();
 
   text_author[2] = "Christine Würth";
   text_title[2] = "NeoTouch";
@@ -97,8 +100,8 @@ void setup() {
   videos[2].pause();
   making_of_videos[2] = new Movie(this, "NeoTouch - The Making of.mp4");
   making_of_videos[2].loop();
-  making_of_videos[2].pause();
   making_of_videos[2].volume(0);
+  making_of_videos[2].pause();
 
   text_author[3] = "Ahrian Taylor & Eugenio Moggio";
   text_title[3] = "Nero";
@@ -110,21 +113,21 @@ void setup() {
   videos[3].pause();
   making_of_videos[3] = new Movie(this, "Nero - The making of.mp4");
   making_of_videos[3].loop();
-  making_of_videos[3].pause();
   making_of_videos[3].volume(0);
+  making_of_videos[3].pause();
 
   text_author[4] = "Parker Heyl";
   text_title[4] = "Analog Future";
   text_url[4] = "http://www.interactivearchitecture.org/lab-projects/analog-future";
   text_content[4] = "This project questions the use of emerging technologies in contemporary music, art, and architectural practices and our notions of spatiality in translating from the physical to the virtual. A holistic cybernetic fantasy blurs the line between the virtual and the real. The physical object is slowly tranquilized and replaced with less potent simulacra of itself. Interactive algorithms have largely informed modern conceptions of intelligence, thus ignoring the ways in which naturally-occurring physical systems also form networks encoded with complex information. Against this trend, Analog Future seeks to relinquish computerised regulation in favour of an analog aesthetic.";
 
-  videos[4] = new Movie(this, "Analog Future.mp4");
+  videos[4] = new Movie(this, "Analog Future-2.mp4");
   videos[4].loop();
   videos[4].pause();
   making_of_videos[4] = new Movie(this, "Analog Future - The making of.mp4");
   making_of_videos[4].loop();
-  making_of_videos[4].pause();
   making_of_videos[4].volume(0);
+  making_of_videos[4].pause();
 
   text_author[5] = "Michael Wagner";
   text_title[5] = "Marble Maze";
@@ -136,8 +139,8 @@ void setup() {
   videos[5].pause();
   making_of_videos[5] = new Movie(this, "Marble Maze - The making of.mp4");
   making_of_videos[5].loop();
-  making_of_videos[5].pause();
   making_of_videos[5].volume(0);
+  making_of_videos[5].pause();
 
   text_author[6] = "Luyang Zou & Yildiz Tufan";
   text_title[6] = "Phonon";
@@ -149,8 +152,9 @@ void setup() {
   videos[6].pause();
   making_of_videos[6] = new Movie(this, "Phonon - The making of.mp4");
   making_of_videos[6].loop();
-  making_of_videos[6].pause();
   making_of_videos[6].volume(0);
+  making_of_videos[6].pause();
+
 
   text_author[7] = "Naomi Lea";
   text_title[7] = "Felt Presence";
@@ -162,8 +166,8 @@ void setup() {
   videos[7].pause();
   making_of_videos[7] = new Movie(this, "Yours Shadow - The making of.mp4");
   making_of_videos[7].loop();
-  making_of_videos[7].pause();
   making_of_videos[7].volume(0);
+  making_of_videos[7].pause();
 
   text_author[8] = "Vasilija Abramovic, Bas Overvelde & Ruairi Glynn";
   text_title[8] = "Edge of Chaos";
@@ -175,9 +179,9 @@ void setup() {
   videos[8].pause();
   making_of_videos[8] = new Movie(this, "Making of Edge of Chaos.mp4");
   making_of_videos[8].loop();
-  making_of_videos[8].pause();
   making_of_videos[8].volume(0);
-
+  making_of_videos[8].pause();
+  
   // Create the font
   //printArray(PFont.list());
   f = createFont("Helvetica-Light", FONT_SIZE);
@@ -191,7 +195,7 @@ void setup() {
     myPort = new Serial(this, portName, 9600);
     val = myPort.readStringUntil(lf);
   }
-  prevTime = millis();
+  //prevTime = millis();
   
   status = Status.IDLE;
 }
@@ -214,6 +218,11 @@ void draw() {
       if (val!=null) angle = (Integer.parseInt(val.replace("\r\n", "")))%steps/float(steps)*PI*2;
       newSource = int((Integer.parseInt(val.replace("\r\n", "")))%steps/float(steps)*videos.length);
       if (newSource!=selSource) updateVideo(newSource, selSource);
+      if (angle != prevAngle) {
+        prevTime = millis();
+        prevAngle = angle;
+      }
+
       println("Serial value: "+val+"|"); //print it out in the console
     }
     catch (NumberFormatException e) {
@@ -230,7 +239,7 @@ void draw() {
     //println("Percent movement: "+percentMovement);
   }
 
-   angleDeg = angle/PI*180;
+    angleDeg = angle/PI*180;
     if (selSource < videos.length) angleDegEnd = 360.0/videos.length*(selSource+1);
     else angleDegEnd = 360.0;
     float angleDegStart = (360.0/videos.length)*(selSource);
@@ -270,9 +279,25 @@ void draw() {
     tint(255, fading);
     // show main video
     image(videos[selSource], -width/SCALING/2, -height/SCALING*0.8, width/SCALING, height/SCALING);
+    stroke(255);
+    int tSize=40;
+line(-width/SCALING/2, (-height/SCALING*0.8)-tSize, -width/SCALING/2, (-height/SCALING*0.8)+tSize);
+line((-width/SCALING/2)-tSize, -height/SCALING*0.8, (-width/SCALING/2)+tSize, -height/SCALING*0.8);
 
+line((-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)-tSize, (-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+tSize);
+line((-width/SCALING/2) + (width/SCALING)-tSize, (-height/SCALING*0.8), (-width/SCALING/2) + (width/SCALING)+tSize, (-height/SCALING*0.8));
+
+line((-width/SCALING/2)-tSize, (-height/SCALING*0.8)+(height/SCALING), (-width/SCALING/2)+tSize, (-height/SCALING*0.8)+(height/SCALING));
+line((-width/SCALING/2), (-height/SCALING*0.8)+(height/SCALING)-tSize, (-width/SCALING/2), (-height/SCALING*0.8)+(height/SCALING)+tSize);
+
+line((-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+(height/SCALING)-tSize, (-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+(height/SCALING)+tSize);
+line((-width/SCALING/2) + (width/SCALING)-tSize, (-height/SCALING*0.8)+(height/SCALING), (-width/SCALING/2) + (width/SCALING)+tSize, (-height/SCALING*0.8)+(height/SCALING));
+
+noStroke();
     // show making of video
     image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/2, width/SCALING/2, height/SCALING/2);
+
+//line(-width/SCALING/2, height/SCALING/2/2, -width/SCALING/2, height/SCALING/2/2, height/SCALING/2);
 
     // show author and title
     textFont(fb);
@@ -297,10 +322,10 @@ void updateVideo(int newSource, int curSource) {
   making_of_videos[curSource].pause();
   selSource = newSource;
   videos[selSource].loop();
-  videos[selSource].volume(100);
+  videos[selSource].volume(VOLUME_LEVEL);
   making_of_videos[selSource].loop();
   println("Source: "+selSource);
-  prevTime = millis();
+  //prevTime = millis();
 }
 
 //void changeVideo() {
