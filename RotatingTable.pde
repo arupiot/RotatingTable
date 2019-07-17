@@ -13,8 +13,8 @@ int NUMBER = 9;
 float SCALING = 2.5;
 int FONT_SIZE = 20;
 int FONT_SIZE_BIG = 30;
-int IDLE_TIME = 120*1000;
-float VOLUME_LEVEL = 0.5;
+int IDLE_TIME = 12*1000;
+float VOLUME_LEVEL = 0.2;
 
 enum Status {
   RUNNING, 
@@ -44,7 +44,7 @@ String[] text_url = new String[NUMBER];
 String[] text_content = new String[NUMBER];
 Serial myPort;  // Create object from Serial class
 String val;     // Data received from the serial port
-PFont f, fb;
+PFont f, fb, ft;
 
 float angle = 0;
 float angleDeg = 0;
@@ -181,11 +181,12 @@ void setup() {
   making_of_videos[8].loop();
   making_of_videos[8].volume(0);
   making_of_videos[8].pause();
-  
+
   // Create the font
   //printArray(PFont.list());
   f = createFont("Helvetica-Light", FONT_SIZE);
   fb = createFont("Helvetica-Light", FONT_SIZE_BIG);
+  ft = createFont("Helvetica", FONT_SIZE_BIG*1.5);
   textFont(f);
   fill(255);
 
@@ -196,7 +197,7 @@ void setup() {
     val = myPort.readStringUntil(lf);
   }
   //prevTime = millis();
-  
+
   status = Status.IDLE;
 }
 
@@ -235,20 +236,20 @@ void draw() {
     //angle = (millis()*speed)%(steps*10)/float(steps*10)*PI*2;
     angle = (mouseX)%(width)/float(width)*PI*2;
     newSource = int(angle/PI/2*10000%(steps*10)/float(steps*10)*videos.length);
-    
+
     //println("Percent movement: "+percentMovement);
   }
 
-    angleDeg = angle/PI*180;
-    if (selSource < videos.length) angleDegEnd = 360.0/videos.length*(selSource+1);
-    else angleDegEnd = 360.0;
-    float angleDegStart = (360.0/videos.length)*(selSource);
-    percentMovement = (angleDeg-angleDegStart)/(360.0/videos.length)*100;
-    println("New Source: " + newSource + " | Sel Source: " + selSource);
-    if (percentMovement <= 20) fading = int(percentMovement/20*255);
-    if (percentMovement >= 80) fading = int((100-percentMovement)/20*255);
-    if (newSource!=selSource) updateVideo(newSource, selSource);
- 
+  angleDeg = angle/PI*180;
+  if (selSource < videos.length) angleDegEnd = 360.0/videos.length*(selSource+1);
+  else angleDegEnd = 360.0;
+  float angleDegStart = (360.0/videos.length)*(selSource);
+  percentMovement = (angleDeg-angleDegStart)/(360.0/videos.length)*100;
+  println("New Source: " + newSource + " | Sel Source: " + selSource);
+  if (percentMovement <= 20) fading = int(percentMovement/20*255);
+  if (percentMovement >= 80) fading = int((100-percentMovement)/20*255);
+  if (newSource!=selSource) updateVideo(newSource, selSource);
+
 
   //println("Angle: "+angle+"|"); //print it out in the console
   //pushMatrix();
@@ -257,51 +258,85 @@ void draw() {
   else status = Status.RUNNING;
 
   if (millis()%10==0) println("Angle: "+angle+" | Percent movement: "+percentMovement+" | Angle degrees: "+angleDeg+" | Angle end: "+angleDegEnd);
- 
+
   println("Status: "+status+" | "+millis()+" | "+prevTime+" | "+IDLE_TIME+" | "+(millis()-prevTime));
- 
+
   if (status == Status.IDLE) {
     tint(255, 255);
     image(screensaver, 0, 0, width, height);
     screensaver.loop();
-    for (int i=0;i<videos.length;i++) {
+    for (int i=0; i<videos.length; i++) {
       making_of_videos[i].volume(0);
       videos[i].volume(0);
     }
+    textFont(ft);
+    text("Turn the table to select a project", width/2-300, height/4*3);
   } else {
     screensaver.pause();
     int x = width/2;
     int y = height/2;
     translate(x, y);
 
+
+    stroke(255);
+    pushMatrix();
+    rotate((TWO_PI/videos.length)*5);
+    for (int i = 0; i < videos.length; i++) {  
+      pushMatrix();
+      float rad = i*TWO_PI/videos.length;
+      rotate(rad);
+      translate(0, -height/2);
+      line(0, 0, 0, 46);
+      //text_title[i]
+      pushMatrix();
+      rotate(PI);
+      text(text_title[i], 5, -30);
+      popMatrix();
+      popMatrix();
+    }
+    popMatrix();
+    noStroke();
+
+
     rotate(angle);
 
     tint(255, fading);
     // show main video
-    image(videos[selSource], -width/SCALING/2, -height/SCALING*0.8, width/SCALING, height/SCALING);
     stroke(255);
+
+    image(videos[selSource], -width/SCALING/2, -height/SCALING*0.8, width/SCALING, height/SCALING);
+
+
+    /////////////// Crosshairs //////////////
+
     int tSize=40;
-line(-width/SCALING/2, (-height/SCALING*0.8)-tSize, -width/SCALING/2, (-height/SCALING*0.8)+tSize);
-line((-width/SCALING/2)-tSize, -height/SCALING*0.8, (-width/SCALING/2)+tSize, -height/SCALING*0.8);
+    line(-width/SCALING/2, (-height/SCALING*0.8)-tSize, -width/SCALING/2, (-height/SCALING*0.8)+tSize);
+    line((-width/SCALING/2)-tSize, -height/SCALING*0.8, (-width/SCALING/2)+tSize, -height/SCALING*0.8);
 
-line((-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)-tSize, (-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+tSize);
-line((-width/SCALING/2) + (width/SCALING)-tSize, (-height/SCALING*0.8), (-width/SCALING/2) + (width/SCALING)+tSize, (-height/SCALING*0.8));
+    line((-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)-tSize, (-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+tSize);
+    line((-width/SCALING/2) + (width/SCALING)-tSize, (-height/SCALING*0.8), (-width/SCALING/2) + (width/SCALING)+tSize, (-height/SCALING*0.8));
 
-line((-width/SCALING/2)-tSize, (-height/SCALING*0.8)+(height/SCALING), (-width/SCALING/2)+tSize, (-height/SCALING*0.8)+(height/SCALING));
-line((-width/SCALING/2), (-height/SCALING*0.8)+(height/SCALING)-tSize, (-width/SCALING/2), (-height/SCALING*0.8)+(height/SCALING)+tSize);
+    line((-width/SCALING/2)-tSize, (-height/SCALING*0.8)+(height/SCALING), (-width/SCALING/2)+tSize, (-height/SCALING*0.8)+(height/SCALING));
+    line((-width/SCALING/2), (-height/SCALING*0.8)+(height/SCALING)-tSize, (-width/SCALING/2), (-height/SCALING*0.8)+(height/SCALING)+tSize);
 
-line((-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+(height/SCALING)-tSize, (-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+(height/SCALING)+tSize);
-line((-width/SCALING/2) + (width/SCALING)-tSize, (-height/SCALING*0.8)+(height/SCALING), (-width/SCALING/2) + (width/SCALING)+tSize, (-height/SCALING*0.8)+(height/SCALING));
+    line((-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+(height/SCALING)-tSize, (-width/SCALING/2) + (width/SCALING), (-height/SCALING*0.8)+(height/SCALING)+tSize);
+    line((-width/SCALING/2) + (width/SCALING)-tSize, (-height/SCALING*0.8)+(height/SCALING), (-width/SCALING/2) + (width/SCALING)+tSize, (-height/SCALING*0.8)+(height/SCALING));
+    int tempVal=609;
+    line(0, tempVal, 0, 1020);
+    line(0-tSize, tempVal+tSize, 0+tSize, tempVal+tSize);
+    noStroke();
 
-noStroke();
+    ///////////////////////////////////////////////////////
+
+
     // show making of video
     image(making_of_videos[selSource], -width/SCALING/2, height/SCALING/2/2, width/SCALING/2, height/SCALING/2);
 
-//line(-width/SCALING/2, height/SCALING/2/2, -width/SCALING/2, height/SCALING/2/2, height/SCALING/2);
+    //line(-width/SCALING/2, height/SCALING/2/2, -width/SCALING/2, height/SCALING/2/2, height/SCALING/2);
 
     // show author and title
     textFont(fb);
-    fill(255,255,255,fading);
+    fill(255, 255, 255, fading);
     text(text_author[selSource]+" - "+text_title[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG);
 
     // shor url
@@ -311,7 +346,7 @@ noStroke();
     // show text, the text wraps within text box
     text(text_content[selSource], 0+width/50, height/SCALING/2/2+FONT_SIZE_BIG*3, width/SCALING/2-width/50, height/SCALING/2*2); 
     tint(255, 255);
-    fill(255,255,255,255);
+    fill(255, 255, 255, 255);
 
     //popMatrix();
   }
